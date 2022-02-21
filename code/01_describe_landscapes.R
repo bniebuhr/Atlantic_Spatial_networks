@@ -90,14 +90,14 @@ fru <- readxl::read_xlsx("data/Atlantic_forest_frugivory_data_points.xlsx") %>%
 #' - Create a series of buffers, with extent from 250 m to 10 km 
 #' - Calculate the change in absolute area of forest (in hectares) within each buffer, for each point
 #' - Calculate the change in proportion of forest within each buffer, for each point
-#' - Classify points where the changes were the highest.
+#' - Classify points where the changes were the highest (> 3% of change).
 #' 
 #' ## Pollination networks
 #' 
 #' ### Calculate changes
 
-#--- label=polinization, eval=FALSE, echo=TRUE
-# polinization
+#--- label=pollination, eval=FALSE, echo=TRUE
+# pollination
 
 # extract amount of forest
 buffers <- c(250, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000)
@@ -136,7 +136,7 @@ pol_forest_change <- pol_1985 %>%
 pol_forest_change %>%
   readr::write_csv(file = "output/polinization_forest_change.csv")
 
-#--- label=polinization_load, eval=TRUE, echo=FALSE
+#--- label=pollination_load, eval=TRUE, echo=FALSE
 pol_forest_change <- readr::read_csv(file = "output/polinization_forest_change.csv")
 
 #' ### Calculate changes
@@ -197,7 +197,7 @@ pol %>%
 
 #' Here we see we have only `r nrow(dplyr::filter(pol, stability == "forest loss"))` points with forest loss.
 
-#--- label=polinization_save_vector, eval=FALSE, echo=TRUE
+#--- label=pollination_save_vector, eval=FALSE, echo=TRUE
 # save shapefile
 sf::st_write(pol,
              dsn = "output/Atlantic_forest_floral_visitor_data_points_forest_change.gpkg",
