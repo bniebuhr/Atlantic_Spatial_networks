@@ -3,6 +3,37 @@
 #' author: Bernardo Niebuhr, Mauricio Vancine
 #' ---
 
+#--- label=setup, include=FALSE
+# This is optional
+# I choose the 'styler' package for tidying the code to preserve indentations
+# I set the cutoff for code tidying to 60, but this doesn't currently work with styler.
+# Set tidy = True to get the knitr default
+# I want all figures as png and pdf in high quality in a subfolder called figure
+library(NinaR)
+library(knitr)
+
+opts_knit$set(
+  root.dir = rprojroot::find_rstudio_root_file()
+) 
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy = "styler",
+  dev = c("png", "pdf"),
+  dpi = 600,
+  fig.path = "figure/",
+  fig.align="center",
+  message=FALSE, 
+  warning=FALSE
+)
+
+options(
+  xtable.comment = F,
+  xtable.include.rownames = F,
+  nina.logo.y.pos = 0.15
+)
+palette(ninaPalette())
+
 #' # Introduction
 #' 
 #' Here we explore the amount of forest change, in absolute area and proportion, 
@@ -65,7 +96,7 @@ fru <- readxl::read_xlsx("data/Atlantic_forest_frugivory_data_points.xlsx") %>%
 #' 
 #' ### Calculate changes
 
-#------
+#--- label=polinization, eval=FALSE, echo=TRUE
 # polinization
 
 # extract amount of forest
@@ -78,7 +109,8 @@ tictoc::toc() # 17 min, 11 buffer sizes, 200 points
 
 # calculate isolation
 # tictoc::tic()
-# pol_1985_enn <- landscapemetrics::scale_sample(forest_1985, pol[1:2,], shape = "circle", size = buffers,
+# pol_1985_enn <- landscapemetrics::scale_sample(forest_1985, pol[1:2,], shape = "circle", 
+#                                                size = buffers,
 #                                                what = c("lsm_c_enn_mn"))
 # tictoc::toc()
 
@@ -89,7 +121,8 @@ pol_2020 <- landscapetools::util_extract_multibuffer(forest_2020, pol, buffer_wi
 
 # calculate isolation
 # tictoc::tic()
-# pol_2020_enn <- landscapemetrics::scale_sample(forest_2020, pol[1:2,], shape = "circle", size = buffers,
+# pol_2020_enn <- landscapemetrics::scale_sample(forest_2020, pol[1:2,], shape = "circle", 
+#                                                size = buffers,
 #                                                what = c("lsm_c_enn_mn"))
 # tictoc::toc()
 
@@ -98,6 +131,13 @@ pol_forest_change <- pol_1985 %>%
   dplyr::bind_cols(pol_2020[3:4]) %>%
   dplyr::mutate(change_area_ha = (freq2020 - freq1985)*resol**2/10e4,
                 change_prop = 100*(rel_freq2020 - rel_freq1985))
+
+# export table of changes
+pol_forest_change %>%
+  readr::write_csv(file = "output/polinization_forest_change.csv")
+
+#--- label=polinization_load, eval=TRUE, echo=FALSE
+pol_forest_change <- readr::read_csv(file = "output/polinization_forest_change.csv")
 
 #' ### Calculate changes
 #'
@@ -133,10 +173,6 @@ pol_forest_change %>%
 #' 3% (at the highest extent, 10 km buffer) as stable, and the others as "forest loss" and
 #' "forest gain".
 #'
-
-# export table of changes
-pol_forest_change %>%
-  readr::write_csv(file = "output/polinization_forest_change.csv")
 
 # join tables
 pol <- pol %>%
@@ -161,6 +197,7 @@ pol %>%
 
 #' Here we see we have only `r nrow(dplyr::filter(pol, stability == "forest loss"))` points with forest loss.
 
+#--- label=polinization_save_vector, eval=FALSE, echo=TRUE
 # save shapefile
 sf::st_write(pol,
              dsn = "output/Atlantic_forest_floral_visitor_data_points_forest_change.gpkg",
@@ -185,27 +222,44 @@ tm_shape(pol) +
 #'
 #' ### Calculate changes
 
-#------
-# frugibory
+#--- label=frugivory, eval=FALSE, echo=TRUE
+# frugivory
 
 # extract amount of forest
 buffers <- c(250, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000)
-tictoc::tic()
 fru_1985 <- landscapetools::util_extract_multibuffer(forest_1985, fru, buffer_width = buffers,
                                                      rel_freq = TRUE, point_id_text = FALSE) %>%
   dplyr::rename(freq1985 = freq, rel_freq1985 = rel_freq)
-tictoc::toc() # 17 min, 11 buffer sizes, 200 points
+
+# calculate isolation
+# tictoc::tic()
+# fru_1985_enn <- landscapemetrics::scale_sample(forest_1985, fru[1:2,], shape = "circle", 
+#                                                size = buffers, what = c("lsm_c_enn_mn"))
+# tictoc::toc()
 
 # show_shareplot(multibuffer_df = fru_1985 %>% dplyr::filter(id %in% 1:5))
 fru_2020 <- landscapetools::util_extract_multibuffer(forest_2020, fru, buffer_width = buffers,
                                                      rel_freq = TRUE, point_id_text = FALSE) %>%
   dplyr::rename(freq2020 = freq, rel_freq2020 = rel_freq)
 
+# calculate isolation
+# tictoc::tic()
+# fru_2020_enn <- landscapemetrics::scale_sample(forest_2020, fru[1:2,], shape = "circle", 
+#                                                size = buffers, what = c("lsm_c_enn_mn"))
+# tictoc::toc()
+
 fru_forest_change <- fru_1985 %>%
   tibble::as_tibble() %>%
   dplyr::bind_cols(fru_2020[3:4]) %>%
   dplyr::mutate(change_area_ha = (freq2020 - freq1985)*resol**2/10e4,
                 change_prop = 100*(rel_freq2020 - rel_freq1985))
+
+# export table of changes
+fru_forest_change %>%
+  readr::write_csv(file = "output/frugivory_forest_change.csv")
+
+#--- label=frugivory_load, eval=TRUE, echo=FALSE
+fru_forest_change <- readr::read_csv(file = "output/frugivory_forest_change.csv")
 
 #' ### Calculate changes
 #'
@@ -242,10 +296,6 @@ fru_forest_change %>%
 #' "forest gain".
 #'
 
-# export table of changes
-fru_forest_change %>%
-  readr::write_csv(file = "output/fruinization_forest_change.csv")
-
 # join tables
 fru <- fru %>%
   dplyr::left_join(
@@ -261,27 +311,31 @@ fru <- fru %>%
     TRUE ~ "forest gain"
   ))
 
-
 # How many forest loss points do we have?
 fru %>%
   dplyr::filter(stability == "forest loss") %>%
   nrow()
 
-#' Here we see we have only `r nrow(dplyr::filter(fru, stability == "forest loss"))` points with forest loss.
+#' Here we see we have `r nrow(dplyr::filter(fru, stability == "forest loss"))` points with forest loss in the frugivory dataset.
 
+#--- label=frugivory_vector_save, eval=FALSE, echo=TRUE
 # save shapefile
 sf::st_write(fru,
-             dsn = "output/Atlantic_forest_floral_visitor_data_points_forest_change.gpkg",
+             dsn = "output/Atlantic_forest_frugivory_data_points_forest_change.gpkg",
              delete_dsn = TRUE)
 
 #' ### Plot spatial data
 #'
-#' We finally plot the spatial data.
+#' We finally plot the spatial data. Here there seems to be some outliers that we must either check or remove.
 
 # change
-tm_shape(fru) +
+fru %>% 
+  dplyr::filter(!is.na(change_prop)) %>%
+  tm_shape() +
   tmap::tm_dots(col = "change_prop", size = 0.1)
 
 # stability
-tm_shape(fru) +
+fru %>% 
+  dplyr::filter(!is.na(change_prop)) %>% 
+  tm_shape() +
   tmap::tm_dots(col = "stability", size = 0.1, palette = c("blue", "red", "yellow"))
